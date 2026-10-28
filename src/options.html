@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>X 语义过滤器 · 设置</title>
+  <link rel="stylesheet" href="options.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <div class="logo">X</div>
+        <div>
+          <h1>X 语义过滤器</h1>
+          <p class="sub">用自然语言规则实时折叠时间线里的低价值内容</p>
+        </div>
+      </div>
+      <div class="top-actions">
+        <div class="lang-switch" id="langSwitch">
+          <button type="button" data-lang="zh">中</button>
+          <button type="button" data-lang="en">EN</button>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="enabled" />
+          <span class="track"><span class="thumb"></span></span>
+          <span class="switch-label">启用</span>
+        </label>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="card">
+      <div class="card-head">
+        <h2>判断引擎</h2>
+        <p>每条帖子都会交给模型做一次「是否命中某类内容」的判断。Jev 最快最便宜；国内网络或支付不便时可用 OpenAI 兼容接口。</p>
+      </div>
+
+      <div class="providers" id="providers">
+        <label class="provider" data-provider="typesafe">
+          <input type="radio" name="provider" value="typesafe" />
+          <div class="provider-body">
+            <div class="provider-title">Jev <span class="pill-mini">推荐</span></div>
+            <div class="provider-desc">TypeSafe 的 System One 模型，单次判断约 300–500ms，$0.042/百万输入 token，输出不计费。</div>
+          </div>
+        </label>
+        <label class="provider" data-provider="clef">
+          <input type="radio" name="provider" value="clef" />
+          <div class="provider-body">
+            <div class="provider-title">Clef-omni <span class="pill-mini">支持图片</span></div>
+            <div class="provider-desc">Cloudflare 决策模型，一次请求连图带文，$0.15/百万输入 token，输出不计费。</div>
+          </div>
+        </label>
+        <label class="provider" data-provider="openai">
+          <input type="radio" name="provider" value="openai" />
+          <div class="provider-body">
+            <div class="provider-title">OpenAI 兼容接口</div>
+            <div class="provider-desc">DeepSeek、硅基流动、阿里百炼、自建代理等。延迟 1–3 秒，按各自价格计费。</div>
+          </div>
+        </label>
+        <label class="provider" data-provider="mock">
+          <input type="radio" name="provider" value="mock" />
+          <div class="provider-body">
+            <div class="provider-title">本地模拟</div>
+            <div class="provider-desc">不联网，用关键词假装判断，只用来确认界面和折叠效果。</div>
+          </div>
+        </label>
+      </div>
+
+      <div class="fields" data-for="typesafe">
+        <div class="field">
+          <label for="typesafeKey">TypeSafe API Key</label>
+          <input type="password" id="typesafeKey" placeholder="ts_live_..." autocomplete="off" spellcheck="false" />
+          <p class="hint" data-i18n="ts_key">在 <a href="https://console.typesafe.ai/keys" target="_blank" rel="noreferrer">console.typesafe.ai/keys</a> 创建。目前注册后需绑定信用卡并预付 $25 才能生成 Key，早期赠送额度已取消。</p>
+        </div>
+        <div class="field">
+          <label for="typesafeModel">模型</label>
+          <input type="text" id="typesafeModel" placeholder="jev-latest" spellcheck="false" />
+          <p class="hint" data-i18n="ts_model">保持 <code>jev-latest</code> 即可，会自动指向最新版本（当前 1.13.x）。</p>
+        </div>
+        <div class="field">
+          <label for="typesafeBase">接口地址</label>
+          <input type="text" id="typesafeBase" placeholder="https://api.typesafe.ai" spellcheck="false" />
+          <p class="hint" data-i18n="ts_base">默认 <code>https://api.typesafe.ai</code>。若试跑返回 <b>451 / 地区不可用</b>，说明当前出口 IP 被挡：让浏览器整体走代理（PAC 里要包含这个域名），或在这里填你自己的中转地址。</p>
+        </div>
+      </div>
+
+      <div class="fields" data-for="clef">
+        <div class="field">
+          <label for="clefAccountId">Cloudflare Account ID</label>
+          <input type="text" id="clefAccountId" placeholder="your-account-id" spellcheck="false" />
+          <p class="hint" data-i18n="clef_id">Cloudflare 控制台右侧栏「账户 ID」即可复制。请求地址形如 <code>/accounts/&lt;ID&gt;/ai/run/@cf/cloudflare/clef-omni</code>。</p>
+        </div>
+        <div class="field">
+          <label for="clefKey">API Token</label>
+          <input type="password" id="clefKey" placeholder="Cloudflare API token" autocomplete="off" spellcheck="false" />
+          <p class="hint">Token 需要有 Workers AI 权限。和 Jev 不同，这个模型是决策接口，不是 chat/completions。</p>
+        </div>
+        <div class="field">
+          <label for="clefModel">模型</label>
+          <input type="text" id="clefModel" placeholder="@cf/cloudflare/clef-omni" spellcheck="false" />
+          <p class="hint" data-i18n="clef_model">默认 <code>@cf/cloudflare/clef-omni</code>；也可以用 <code>@cf/cloudflare/clef</code>（不支持图片）。</p>
+        </div>
+      </div>
+
+      <div class="fields" data-for="openai">
+        <div class="field">
+          <label for="baseUrl">Base URL</label>
+          <div class="row">
+            <input type="text" id="baseUrl" placeholder="https://api.deepseek.com/v1" spellcheck="false" />
+            <button type="button" class="btn" id="grantBtn">授权访问</button>
+          </div>
+          <p class="hint" data-i18n="oa_base">填写到 <code>/v1</code> 为止，程序会自动请求 <code>/chat/completions</code>。换域名后需要点一次「授权访问」。</p>
+        </div>
+        <div class="field">
+          <label for="apiKey">API Key</label>
+          <input type="password" id="apiKey" placeholder="sk-..." autocomplete="off" spellcheck="false" />
+        </div>
+        <div class="field">
+          <label for="model">模型名</label>
+          <input type="text" id="model" placeholder="deepseek-chat" spellcheck="false" />
+          <p class="hint" data-i18n="oa_model">建议用便宜且支持 JSON 输出的模型，例如 <code>deepseek-chat</code>、<code>Qwen/Qwen2.5-7B-Instruct</code>、<code>qwen-flash</code>。</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-head">
+        <h2>图像判断 <span class="pill-mini">可选</span></h2>
+        <p>Jev 只吃文字，看不见图。开启后，带图的帖子会把图片下载下来，交给另一个支持视觉的模型判断——纯图片帖、海报二维码、图片里的字都能被识别。图片请求会单独计费。</p>
+      </div>
+
+      <label class="checkline">
+        <input type="checkbox" id="visionEnabled" />
+        <span>开启图像判断（需要下面这套配置，可以和上面的引擎不同）</span>
+      </label>
+
+      <p class="hint warn-text" id="visionWarn" hidden>已开启，但地址 / Key / 模型还没填全，带图帖会被直接跳过（不报错）。</p>
+
+      <div class="fields vision-fields" id="visionFields">
+        <div class="field">
+          <label for="visionBaseUrl">Base URL</label>
+          <div class="row">
+            <input type="text" id="visionBaseUrl" placeholder="https://dashscope.aliyuncs.com/compatible-mode/v1" spellcheck="false" />
+            <button type="button" class="btn" id="visionCopy">沿用上方接口</button>
+          </div>
+          <p class="hint" data-i18n="vis_base">必须支持 <code>image_url</code> 多模态输入。阿里百炼、硅基流动、OpenAI、智谱都行。</p>
+        </div>
+        <div class="field">
+          <label for="visionApiKey">API Key</label>
+          <input type="password" id="visionApiKey" placeholder="sk-..." autocomplete="off" spellcheck="false" />
+        </div>
+        <div class="field">
+          <label for="visionModel">视觉模型名</label>
+          <input type="text" id="visionModel" placeholder="qwen-vl-plus" spellcheck="false" />
+          <p class="hint" data-i18n="vis_model">例如 <code>qwen-vl-plus</code>、<code>glm-4.5v</code>、<code>gpt-4o-mini</code>。小模型就够用，判断任务不需要强推理。</p>
+        </div>
+        <div class="field">
+          <label for="visionMaxImages">每条帖子最多看几张图</label>
+          <select id="visionMaxImages">
+            <option value="1">1 张（推荐，最省）</option>
+            <option value="2">2 张（四宫格更准）</option>
+          </select>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-head">
+        <h2>过滤规则</h2>
+        <p>用自然语言描述「你不想要什么」。模型按语义判断，不需要你列举关键词。最多 10 条，每条独立判断，不互相干扰。</p>
+      </div>
+
+      <div class="quick-add">
+        <input type="text" id="nlRule" placeholder="一句话说清你不想看什么，例如：不想看房价涨跌的争吵" spellcheck="false" />
+        <button type="button" class="btn btn-primary" id="nlAdd">添加规则</button>
+      </div>
+      <p class="hint nl-hint">直接用你的原话当判定标准，模型按语义判断，不用列举关键词。</p>
+
+      <div class="preset-row">
+        <span class="preset-label">快速载入</span>
+        <button type="button" class="btn" id="presetSpam">垃圾信息</button>
+        <button type="button" class="btn" id="presetPolitical">仇恨 / 政治攻击</button>
+        <span class="hint" style="margin:0">会替换全部规则；图片类规则需开启「图像判断」</span>
+      </div>
+
+      <div id="rules" class="rules"></div>
+
+      <div class="rules-foot">
+        <button type="button" class="btn" id="addRule">+ 新增规则</button>
+        <span class="hint" id="ruleCount"></span>
+      </div>
+
+      <details class="agent-box">
+        <summary>给 AI Agent 用：导入 / 导出规则 JSON</summary>
+        <p class="hint" data-i18n="agent_hint">能操作这个页面的 Agent 也可以直接调用 <code>window.XFAgent</code>，接口说明见项目里的 <code>AGENT.md</code>。</p>
+        <textarea id="rulesJson" rows="6" spellcheck="false" placeholder='[{"id":"r_1","label":"房价争论","desc":"...","action":"fold","threshold":0.72,"enabled":true}]'></textarea>
+        <div class="row">
+          <button type="button" class="btn" id="exportRules">导出当前规则</button>
+          <button type="button" class="btn" id="importRules">导入并覆盖</button>
+        </div>
+      </details>
+    </section>
+
+    <section class="card">
+      <div class="card-head">
+        <h2>行为</h2>
+        <p>被判定命中的帖子怎么处理。</p>
+      </div>
+
+      <div class="grid2">
+        <div class="field">
+          <label for="actionMode">处理方式</label>
+          <select id="actionMode">
+            <option value="rule">按每条规则各自的设定</option>
+            <option value="fold">全部折叠（保留一行提示）</option>
+            <option value="dim">全部淡化（鼠标悬停恢复）</option>
+            <option value="hide">全部隐藏（可从左下角恢复）</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="scope">生效范围</label>
+          <select id="scope">
+            <option value="all">所有时间线（首页 / 列表 / 搜索 / 详情页回复）</option>
+            <option value="home">只处理首页时间线</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="threshold">默认阈值 <b id="thresholdVal">0.70</b></label>
+          <input type="range" id="threshold" min="0.5" max="0.95" step="0.01" />
+          <p class="hint">概率高于阈值才处理。调高更保守、漏掉更多；调低更激进、误伤更多。</p>
+        </div>
+
+        <div class="field">
+          <label for="minActConfidence">动作门槛 <b id="minActVal">0.60</b></label>
+          <input type="range" id="minActConfidence" min="0.4" max="0.9" step="0.01" />
+          <p class="hint">概率低于该值时最多只淡化，绝不折叠或隐藏，用于压住误判。</p>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="checkline" style="margin-bottom:8px">
+          <input type="checkbox" id="feedbackEnabled" />
+          <span>高置信度时，自动在 X 上点「对此帖子不感兴趣」</span>
+        </label>
+        <label for="feedbackThreshold">反馈阈值 <b id="feedbackVal">0.90</b></label>
+        <input type="range" id="feedbackThreshold" min="0.8" max="0.99" step="0.01" />
+        <p class="hint">只在首页时间线生效，每 10 分钟最多 8 条。这一步是喂给 X 的推荐算法，让「为你推荐」少推同类内容；关掉不影响折叠。</p>
+      </div>
+
+      <div class="field">
+        <label for="allowlist">作者白名单</label>
+        <textarea id="allowlist" rows="3" placeholder="每行一个账号，不带 @。例如：&#10;levelsio&#10;simonw"></textarea>
+        <p class="hint">白名单里的作者会被直接跳过，不发送任何内容给模型。</p>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-head">
+        <h2>试跑</h2>
+        <p>先用几段文字验证规则写得准不准，再去刷时间线。这一步会真实调用接口并计费（一次约几分钱都不到）。</p>
+      </div>
+
+      <div class="field">
+        <label for="testText">测试文本</label>
+        <textarea id="testText" rows="4">🔥 三个月从 0 到 10 万粉，我只做对了这 5 件事。评论区扣「1」领完整 SOP，限时免费，手慢无。</textarea>
+      </div>
+      <div class="field">
+        <label for="testImage">图片 URL（可选，验证图像判断）</label>
+        <input type="text" id="testImage" placeholder="https://pbs.twimg.com/media/xxxx?format=jpg&name=small" spellcheck="false" />
+        <p class="hint">只有开启图像判断时才生效。填一张公开可访问的图片地址即可，扩展会先下载再发给视觉模型。</p>
+      </div>
+      <div class="row">
+        <button type="button" class="btn btn-primary" id="runTest">运行判断</button>
+        <button type="button" class="btn" id="fillSample">换一条示例</button>
+      </div>
+
+      <div id="testOut" class="test-out hidden"></div>
+    </section>
+
+    <section class="card">
+      <div class="card-head">
+        <h2>今日统计</h2>
+      </div>
+      <div class="stats">
+        <div class="stat"><span id="statClassified">0</span><small>已判断</small></div>
+        <div class="stat"><span id="statFiltered">0</span><small>已过滤</small></div>
+        <div class="stat"><span id="statHidden">0</span><small>隐藏</small></div>
+        <div class="stat"><span id="statFeedback">0</span><small>回传 X</small></div>
+        <div class="stat"><span id="statErrors">0</span><small>出错</small></div>
+      </div>
+      <div class="row">
+        <button type="button" class="btn" id="resetStats">清零</button>
+        <button type="button" class="btn" id="resetAll">恢复默认设置</button>
+      </div>
+      <p class="hint" id="lastError"></p>
+    </section>
+
+    <section class="note">
+      <h3>使用前请知悉</h3>
+      <ul>
+        <li>帖子正文会发送到你配置的模型服务商；开启图像判断后，图片也会一起发出去。本扩展没有自建服务器，也没有中转。</li>
+        <li>视频、GIF、投票不参与判断；纯视频帖会被跳过，纯图片帖在开启图像判断后才会被处理。</li>
+        <li>语义判断一定有误伤。默认只折叠不删除，折叠的帖子随时可以展开。</li>
+        <li data-i18n="note_sel">X 改版可能导致选择器失效，规则里所有 DOM 选择器集中在 <code>src/content.js</code> 顶部。</li>
+      </ul>
+    </section>
+  </main>
+
+  <div id="toast" class="toast"></div>
+  <script src="defaults.js"></script>
+  <script src="i18n.js"></script>
+  <script src="options.js"></script>
+</body>
+</html>

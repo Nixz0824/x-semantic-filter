@@ -1,0 +1,148 @@
+# X 语义过滤器
+
+用**决策模型**（而不是关键词列表）实时折叠 X 时间线上的低价值内容。你用大白话写规则，每条帖子得到每个规则的概率，超过阈值就折叠成一行提示，随时可以展开。
+
+界面支持中文 / English，无后端、无统计上报。
+
+## 为什么用决策模型
+
+聊天模型先"生成一段文字"，再让你把文字解析回判断；决策模型跳过这一步——发 `state` 和若干结构化问题，直接拿回概率。所以它能做到每题 300–800ms、便宜到可以给每条帖子都跑一遍。
+
+支持三种后端 + 本地模拟：
+
+| 后端 | 说明 | 输入 | 价格 |
+| --- | --- | --- | --- |
+| **Jev**（TypeSafe） | System One 决策模型 | 文字 | $0.042 / 百万输入 token，输出不计费 |
+| **Clef-omni**（Cloudflare） | 决策模型，**原生支持图片** | 文字 + 图片同一次请求 | $0.15 / 百万输入 token |
+| **OpenAI 兼容** | DeepSeek、硅基流动、百炼、自建代理 | 文字（图片需另配视觉模型） | 按各家价格 |
+| **本地模拟** | 关键词假判断，不联网 | — | 免费 |
+
+## 功能
+
+- **自然语言规则**：一句话加一条，例如「不想看房价涨跌的争吵」。
+- **两套预设**：垃圾信息（广告、诱导互动、币圈、AI 水文、情绪对骂、低信息量）；仇恨 / 政治攻击（涉华敌意、仇恨歧视、政治人物人身攻击、煽动暴力、恶意合成图像、情绪引战）。
+- **三种动作**：折叠（默认）、淡化、隐藏。折叠保留一行提示，淡化鼠标移上去就恢复，隐藏可从左下角统计条找回。
+- **图像判断**：Clef-omni 同一次请求就能读图；其它后端可另配视觉模型，图片会先下载再转 base64，不要求模型服务商能访问 `pbs.twimg.com`。
+- **可选自动反馈**：高置信度时打开帖子菜单点「不感兴趣」，只在首页、每 10 分钟最多 8 条。
+- **作者白名单**：名单里的作者直接跳过，不发送任何内容。
+- **Agent 接口**：设置页暴露 `window.XFAgent`，另有 JSON 导入导出。见 [AGENT.md](AGENT.md)。
+
+## 安装
+
+1. 打开 `chrome://extensions`，开启「开发者模式」。
+2. 「加载已解压的扩展程序」，选择本目录（含 `manifest.json` 的那一层）。
+3. 点扩展图标 →「打开设置」。
+
+Chrome、Edge 以及其它 Chromium 内核浏览器都能用（包括 ego lite 这类面向 Agent 的 Chromium 构建）。
+
+## 配置
+
+### Jev（TypeSafe）
+
+1. 在 <https://console.typesafe.ai/keys> 建 Key（目前需要绑卡并预付 $25）。
+2. 粘进「TypeSafe API Key」，模型保持 `jev-latest`。
+3. 试跑若返回 **451**，说明出口 IP 被地区限制：让浏览器走代理，或把「接口地址」指向你自己的中转（见 [`relay/`](relay/)）。
+
+### Clef-omni（Cloudflare，支持图片）
+
+1. Cloudflare 控制台右侧栏复制 **Account ID**。
+2. 建一个带 **Workers AI** 权限的 API Token。
+3. 模型保持 `@cf/cloudflare/clef-omni`。
+
+请求地址是 `/accounts/<ID>/ai/run/@cf/cloudflare/clef-omni`，图片以 base64 塞在同一次请求里，所以这个后端不需要再配视觉模型。
+
+### OpenAI 兼容
+
+| 服务 | Base URL | 模型 |
+| --- | --- | --- |
+| DeepSeek | `https://api.deepseek.com/v1` | `deepseek-chat` |
+| 硅基流动 | `https://api.siliconflow.cn/v1` | `Qwen/Qwen2.5-7B-Instruct` |
+| 阿里百炼 | `https://dashscope.aliyuncs.com/compatible-mode/v1` | `qwen-flash` |
+
+换域名后点一次「授权访问」，扩展需要显式拿到该域名的请求权限。
+
+## 实现要点
+
+```
+x.com
+ └─ content.js
+     ├─ MutationObserver 抓 article[data-testid="tweet"]
+     ├─ 提取 id / 作者 / 正文（含引用）/ 图片
+     ├─ 队列：并发 5，150ms 批量节流
+     └─ 命中后设 data-xf-action="fold|dim|hidden|expanded"，插入一行提示
+ └─ background.js（Service Worker）
+     ├─ 文字 → Jev / Clef-omni / OpenAI 兼容
+     ├─ 图片 → 同一次请求（Clef）或单独视觉调用
+     ├─ 概率缓存（按帖子 id + 规则签名）
+     └─ 统计 / 错误映射（451、401、402、429）
+```
+
+两个踩过的坑，改代码前值得知道：
+
+- **状态存在 `data-xf-action` 属性里，不在 class 上。** X 在鼠标悬停和重渲染时会重写 `className`，加的 class 几毫秒内就被抹掉；data 属性不会被 React 管。
+- **缓存只存概率。** 动作和阈值每次现算，所以改「处理方式」立刻生效，也不用重复付费。
+
+## 规则怎么写
+
+一条规则 = `{ label, desc, action, threshold, enabled }`。`desc` 就是模型读的判定标准，写可观察的行为，不要写结论：
+
+> 帖子在讨论房价涨跌，并带有嘲讽、谩骂或情绪化表达；事实报道、数据分析不算。
+
+四个建议：
+
+1. 一条规则只判一件事。
+2. 带上反例，比任何正面描述都更能压误伤。
+3. 阈值从 0.72 起步，跑一天再调 0.05。
+4. 什么语言都行，模型按语义判。
+
+## Agent 接口
+
+设置页暴露 `window.XFAgent`：
+
+```js
+await XFAgent.addRuleFromText("不想看房价涨跌的争吵");
+await XFAgent.setConfig({ actionMode: "dim", feedbackThreshold: 0.92 });
+await XFAgent.applyPreset("political");
+```
+
+完整方法表、规则格式和安全约定见 [AGENT.md](AGENT.md)。
+
+## 隐私
+
+- **没有后端**：请求从你的浏览器直接发给你配置的服务商。
+- **Key 只存在本地** `chrome.storage.sync`。
+- **帖子正文和图片会离开浏览器**（判断时）。不要在不能分享给该服务商的内容上使用。
+- **无统计、无埋点、无远程配置。**
+
+## 成本
+
+按每条帖子约 200 字、8 条规则估算（350–500 输入 token）：
+
+| 后端 | 1000 条 | 延迟 |
+| --- | --- | --- |
+| Jev | ≈ $0.015 | 300–500ms |
+| Clef-omni（纯文字） | ≈ $0.075 | 300–800ms |
+| Clef-omni（带 1 张图） | ≈ $0.12 | +0.5–1.5s |
+| DeepSeek | ≈ ¥1 | 1–3s |
+
+有缓存，同一条帖子只算一次。
+
+## 开发
+
+无构建步骤，纯 MV3 + 原生 JS。
+
+- `test/mock-x.html`：假时间线，内置 `chrome.*` 的 stub，直接用 Chromium 打开就能试折叠效果。
+- 改完代码要在 `chrome://extensions` 里点「重新加载」，再刷新 X；已注入的内容脚本不会自动更新。
+- DOM 选择器集中在 `src/content.js` 顶部。
+
+## 已知限制
+
+- 只支持网页版。
+- 视频、GIF、投票不参与判断；纯视频帖会被跳过。
+- 语义判断一定有误伤，折叠的帖子不会删除。
+- X 改版可能让选择器失效，所以它们都集中在一个地方。
+- 仇恨 / 政治类判断主观性很强。建议用「折叠」而不是「隐藏」，并定期翻一翻被折叠的内容——一个悄悄吞掉正常批评的过滤器，最终只会让你的信息流更糟。
+
+## License
+
+MIT，见 [LICENSE](LICENSE)。

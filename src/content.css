@@ -1,0 +1,310 @@
+/* 状态一律用 data-xf-action 属性驱动，不用 class。
+   X 在 hover / 重渲染时会重写 article 的 className，class 会被整体抹掉；
+   data-* 属性不归 React 管，能扛住重渲染。 */
+
+article[data-xf-action] {
+  position: relative !important;
+}
+
+/* ---------------- 折叠：整块覆盖 ---------------- */
+
+article[data-xf-action="fold"] {
+  min-height: 64px !important;
+  max-height: 64px !important;
+  overflow: hidden !important;
+}
+
+article[data-xf-action="fold"] > div,
+article[data-xf-action="fold"] > section:not(.xf-banner) {
+  visibility: hidden !important;
+}
+
+article[data-xf-action="fold"] > .xf-banner {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 18px 0 16px;
+  border-radius: 0;
+  box-shadow: inset 3px 0 0 var(--xf-cat, #1d9bf0);
+  background: linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--xf-cat, #1d9bf0) 7%, transparent),
+      transparent 46%
+    ),
+    var(--xf-surface, #fff);
+  cursor: pointer;
+  transition: background 160ms ease;
+}
+
+article[data-xf-action="fold"] > .xf-banner:hover {
+  background: linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--xf-cat, #1d9bf0) 13%, transparent),
+      transparent 60%
+    ),
+    var(--xf-surface, #fff);
+}
+
+article[data-xf-action="fold"] > .xf-banner:hover .xf-btn {
+  background: rgba(29, 155, 240, 0.2);
+}
+
+/* ---------------- 淡化 ---------------- */
+
+article[data-xf-action="dim"] > div:not(.xf-banner) {
+  opacity: 0.4;
+  filter: saturate(0.7);
+  transition: opacity 0.15s ease;
+}
+
+article[data-xf-action="dim"]:hover > div:not(.xf-banner) {
+  opacity: 1;
+  filter: none;
+}
+
+/* ---------------- 淡化 / 已展开：右上角小胶囊 ----------------
+   X 的 article 是 display:flex，流内元素会被撑成整列，必须绝对定位 */
+
+article[data-xf-action="dim"] > .xf-banner,
+article[data-xf-action="expanded"] > .xf-banner {
+  position: absolute;
+  top: 6px;
+  right: 56px;
+  left: auto;
+  bottom: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin: 0;
+  padding: 2px 8px;
+  height: 22px;
+  width: auto;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--xf-cat, #1d9bf0) 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--xf-cat, #1d9bf0) 30%, transparent);
+  white-space: nowrap;
+  font-size: 11px;
+  line-height: 1;
+  pointer-events: none;
+  backdrop-filter: blur(4px);
+}
+
+article[data-xf-action="expanded"] > .xf-banner {
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+article[data-xf-action="dim"] > .xf-banner .xf-spacer,
+article[data-xf-action="expanded"] > .xf-banner .xf-spacer,
+article[data-xf-action="dim"] > .xf-banner .xf-btn,
+article[data-xf-action="dim"] > .xf-banner .xf-note {
+  display: none;
+}
+
+article[data-xf-action="dim"] > .xf-banner .xf-tag,
+article[data-xf-action="expanded"] > .xf-banner .xf-tag {
+  font-size: 11px;
+  font-weight: 600;
+}
+
+article[data-xf-action="dim"] > .xf-banner .xf-prob,
+article[data-xf-action="expanded"] > .xf-banner .xf-prob {
+  font-size: 10.5px;
+  padding: 1px 4px;
+  background: transparent;
+}
+
+article[data-xf-action="expanded"] > .xf-banner .xf-icon {
+  display: none;
+}
+
+article[data-xf-action="expanded"] > .xf-banner .xf-btn {
+  font-size: 10.5px;
+  padding: 2px 7px;
+  border-width: 0;
+  background: transparent;
+}
+
+/* ---------------- 隐藏 ---------------- */
+
+article[data-xf-action="hidden"] {
+  display: none !important;
+}
+
+html[data-xf-reveal="1"] article[data-xf-action="hidden"] {
+  display: block !important;
+  outline: 2px dashed rgba(245, 158, 11, 0.7);
+  outline-offset: -2px;
+}
+
+html[data-xf-reveal="1"] article[data-xf-action="hidden"] > div:not(.xf-banner) {
+  opacity: 0.5;
+}
+
+/* ---------------- 通用横幅元素 ---------------- */
+
+.xf-banner {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+    "Microsoft YaHei", sans-serif;
+  box-sizing: border-box;
+  font-size: 13px;
+  line-height: 1.2;
+  color: #536471;
+  animation: xf-in 160ms ease both;
+}
+
+@keyframes xf-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.xf-tag {
+  font-weight: 600;
+  color: #0f1419;
+  font-size: 14px;
+}
+
+.xf-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--xf-cat, #1d9bf0) 15%, transparent);
+  color: var(--xf-cat, #1d9bf0);
+  flex: none;
+}
+
+.xf-prob {
+  font-variant-numeric: tabular-nums;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--xf-cat, #1d9bf0);
+  background: color-mix(in srgb, var(--xf-cat, #1d9bf0) 16%, transparent);
+  padding: 2px 7px;
+  border-radius: 999px;
+}
+
+.xf-note {
+  font-size: 12px;
+  color: #536471;
+}
+
+.xf-spacer {
+  flex: 1;
+}
+
+.xf-btn {
+  appearance: none;
+  border: 1px solid rgba(29, 155, 240, 0.4);
+  background: rgba(29, 155, 240, 0.08);
+  color: #1d9bf0;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 5px 12px;
+  border-radius: 999px;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.xf-btn:hover {
+  background: rgba(29, 155, 240, 0.16);
+}
+
+/* ---------------- 悬浮统计条 ---------------- */
+
+.xf-pill {
+  position: fixed;
+  left: 16px;
+  bottom: 16px;
+  z-index: 2147483000;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 10px 7px 12px;
+  border-radius: 999px;
+  background: rgba(15, 20, 25, 0.86);
+  color: #fff;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+    "Microsoft YaHei", sans-serif;
+  font-size: 12px;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(8px);
+}
+
+.xf-pill-text {
+  white-space: nowrap;
+}
+
+.xf-pill-btn {
+  appearance: none;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: transparent;
+  color: #fff;
+  font-size: 11px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.xf-pill-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+/* ---------------- 错误提示 ---------------- */
+
+.xf-error {
+  position: fixed;
+  left: 50%;
+  bottom: 72px;
+  transform: translateX(-50%);
+  z-index: 2147483001;
+  max-width: 90vw;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: #fdecea;
+  border: 1px solid #f5c2bd;
+  color: #8c1d18;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+    "Microsoft YaHei", sans-serif;
+  font-size: 12px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.18);
+}
+
+.xf-error .xf-pill-btn {
+  border-color: rgba(140, 29, 24, 0.4);
+  color: #8c1d18;
+  flex: none;
+}
+
+@media (prefers-color-scheme: dark) {
+  .xf-banner {
+    color: #8b98a5;
+  }
+  .xf-tag {
+    color: #e7e9ea;
+  }
+  .xf-prob {
+    color: var(--xf-cat, #8b98a5);
+    background: color-mix(in srgb, var(--xf-cat, #1d9bf0) 22%, transparent);
+  }
+  .xf-note {
+    color: #8b98a5;
+  }
+  article[data-xf-action="dim"] > .xf-banner,
+  article[data-xf-action="expanded"] > .xf-banner {
+    background: rgba(29, 155, 240, 0.12);
+  }
+}

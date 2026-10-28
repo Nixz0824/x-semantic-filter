@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<title>Mock X Timeline</title>
+<link rel="stylesheet" href="../src/content.css" />
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: #fff;
+    color: #0f1419;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    font-size: 15px;
+  }
+  .shell { max-width: 600px; margin: 0 auto; border-left: 1px solid #eff3f4; border-right: 1px solid #eff3f4; }
+  .head { position: sticky; top: 0; background: rgba(255,255,255,.9); backdrop-filter: blur(8px); border-bottom: 1px solid #eff3f4; padding: 14px 18px; font-weight: 700; z-index: 2; }
+  article[data-testid="tweet"] { border-bottom: 1px solid #eff3f4; background: #fff; }
+  .tweet-inner { display: flex; gap: 12px; padding: 14px 18px; }
+  .avatar { width: 40px; height: 40px; border-radius: 50%; flex: none; background: linear-gradient(135deg,#c7d2fe,#a5b4fc); }
+  .body { flex: 1; min-width: 0; }
+  .meta { display: flex; align-items: center; gap: 4px; font-size: 14px; }
+  .name { font-weight: 700; }
+  .handle { color: #536471; }
+  .meta a { color: #536471; text-decoration: none; }
+  .text { margin-top: 3px; line-height: 1.55; white-space: pre-wrap; word-break: break-word; }
+  .actions { margin-top: 10px; display: flex; gap: 40px; color: #536471; font-size: 12.5px; }
+  .quoted { margin-top: 10px; border: 1px solid #eff3f4; border-radius: 12px; padding: 10px 12px; }
+  .note { padding: 18px; color: #536471; font-size: 12px; border-top: 1px solid #eff3f4; }
+</style>
+</head>
+<body>
+<div class="shell">
+  <div class="head">首页</div>
+
+  <article data-testid="tweet">
+    <div class="tweet-inner">
+      <div class="avatar"></div>
+      <div class="body">
+        <div class="meta" data-testid="User-Name">
+          <span class="name">产品老张</span><span class="handle">@laozhang</span><span>·</span>
+          <a href="/laozhang/status/1001"><time>2小时</time></a>
+        </div>
+        <div class="text" data-testid="tweetText">🔥 三个月从 0 到 10 万粉，我只做对了这 5 件事。评论区扣「1」领完整 SOP，限时免费，手慢无。链接在主页。</div>
+        <div class="actions"><span>💬 12</span><span>🔁 3</span><span>♡ 88</span></div>
+      </div>
+    </div>
+  </article>
+
+  <article data-testid="tweet">
+    <div class="tweet-inner">
+      <div class="avatar"></div>
+      <div class="body">
+        <div class="meta" data-testid="User-Name">
+          <span class="name">Lin</span><span class="handle">@lin_infra</span><span>·</span>
+          <a href="/lin_infra/status/1002"><time>3小时</time></a>
+        </div>
+        <div class="text" data-testid="tweetText">把 KV cache 改成按页分配之后，长上下文场景显存占用降了约 40%，代价是首 token 延迟多了 8ms。压测数据在下面，batch=32 时吞吐基本没掉。</div>
+        <div class="actions"><span>💬 41</span><span>🔁 26</span><span>♡ 312</span></div>
+      </div>
+    </div>
+  </article>
+
+  <article data-testid="tweet">
+    <div class="tweet-inner">
+      <div class="avatar"></div>
+      <div class="body">
+        <div class="meta" data-testid="User-Name">
+          <span class="name">Daily Alpha</span><span class="handle">@alpha_daily</span><span>·</span>
+          <a href="/alpha_daily/status/1003"><time>4小时</time></a>
+        </div>
+        <div class="text" data-testid="tweetText">$MOON 刚完成空投快照，合约 0.0042 是多头最后上车点，这波 100 倍不要错过，进群拿点位，名额有限。</div>
+        <div class="actions"><span>💬 7</span><span>🔁 2</span><span>♡ 33</span></div>
+      </div>
+    </div>
+  </article>
+
+  <article data-testid="tweet">
+    <div class="tweet-inner">
+      <div class="avatar"></div>
+      <div class="body">
+        <div class="meta" data-testid="User-Name">
+          <span class="name">路人甲</span><span class="handle">@passerby</span><span>·</span>
+          <a href="/passerby/status/1004"><time>5小时</time></a>
+        </div>
+        <div class="text" data-testid="tweetText">你怎么看？评论区说说你的想法，同意的转发。</div>
+        <div class="actions"><span>💬 220</span><span>🔁 18</span><span>♡ 96</span></div>
+      </div>
+    </div>
+  </article>
+
+  <article data-testid="tweet">
+    <div class="tweet-inner">
+      <div class="avatar"></div>
+      <div class="body">
+        <div class="meta" data-testid="User-Name">
+          <span class="name">Mika</span><span class="handle">@mika_ml</span><span>·</span>
+          <a href="/mika_ml/status/1005"><time>6小时</time></a>
+        </div>
+        <div class="text" data-testid="tweetText">刚读完 Attention Is All You Need 的复现笔记，作者把 multi-head 的实现拆得很细，包括为什么除以 sqrt(d_k)。推荐给刚开始看 transformer 的人。</div>
+        <div class="actions"><span>💬 9</span><span>🔁 14</span><span>♡ 205</span></div>
+      </div>
+    </div>
+  </article>
+
+  <article data-testid="tweet">
+    <div class="tweet-inner">
+      <div class="avatar"></div>
+      <div class="body">
+        <div class="meta" data-testid="User-Name">
+          <span class="name">暴躁老王</span><span class="handle">@angrywang</span><span>·</span>
+          <a href="/angrywang/status/1006"><time>7小时</time></a>
+        </div>
+        <div class="text" data-testid="tweetText">这种蠢货也能有十万粉，真是服了，闭嘴吧别出来丢人了。</div>
+        <div class="actions"><span>💬 55</span><span>🔁 1</span><span>♡ 12</span></div>
+      </div>
+    </div>
+  </article>
+
+  <article data-testid="tweet">
+    <div class="tweet-inner">
+      <div class="avatar"></div>
+      <div class="body">
+        <div class="meta" data-testid="User-Name">
+          <span class="name">广告号</span><span class="handle">@adbot</span><span>·</span>
+          <a href="/adbot/status/1007"><time>8小时</time></a>
+        </div>
+        <div class="text" data-testid="tweetText">太真实了</div>
+        <div class="actions"><span>💬 0</span><span>🔁 0</span><span>♡ 2</span></div>
+      </div>
+    </div>
+  </article>
+
+  <article data-testid="tweet">
+    <div class="tweet-inner">
+      <div class="avatar"></div>
+      <div class="body">
+        <div class="meta" data-testid="User-Name">
+          <span class="name">海报号</span><span class="handle">@poster_bot</span><span>·</span>
+          <a href="/poster_bot/status/1008"><time>9小时</time></a>
+        </div>
+        <div data-testid="tweetPhoto" style="margin-top:8px">
+          <img src="https://pbs.twimg.com/media/GPoster123?format=jpg&amp;name=small" alt="" style="width:100%;border-radius:12px;display:block" />
+        </div>
+        <div class="actions"><span>💬 1</span><span>🔁 0</span><span>♡ 3</span></div>
+      </div>
+    </div>
+  </article>
+
+  <div class="note">这是本地测试页，用模拟数据验证折叠 / 淡化 / 展开效果，不会联网。</div>
+</div>
+
+<script src="../src/defaults.js"></script>
+<script>
+  // 模拟 chrome 扩展 API，让 content.js 能在普通页面里跑起来
+  const RULES = globalThis.XF_DEFAULTS.rules;
+  const PATTERNS = {
+    ad: /链接|下单|优惠|私信|课程|社群|限时|购买|折扣|扫码|link|buy|discount/i,
+    bait: /你怎么看|评论区|敢不敢|不服|转发|点赞|同意吗|说说你/i,
+    crypto: /空投|代币|合约|仓位|百倍|moon|token|airdrop|USDT/i,
+    slop: /干货|建议收藏|十条|底层逻辑|认知|赛道|闭环/i,
+    rage: /傻|蠢|滚|垃圾|恶心|闭嘴|idiot|stupid/i,
+    lowinfo: /^[\s\S]{0,12}$/
+  };
+
+  function mockClassify(item) {
+    // 模拟图像判断：纯图片帖 / 带图帖命中广告
+    if (item.images && item.images.length) {
+      return { action: 'fold', label: '广告 / 带货', ruleId: 'ad', prob: 0.91, vision: true, probs: { ad: 0.91 } };
+    }
+    const text = item.text || '';
+    const probs = {};
+    let best = null;
+    for (const r of RULES) {
+      const re = PATTERNS[r.id];
+      const p = re && re.test(text) ? 0.78 + Math.random() * 0.2 : Math.random() * 0.12;
+      probs[r.id] = p;
+      if (p >= r.threshold && (!best || p > best.p)) best = { rule: r, p };
+    }
+    if (!best) return { action: 'none', probs };
+    return {
+      action: best.rule.action,
+      label: best.rule.label,
+      ruleId: best.rule.id,
+      prob: Math.round(best.p * 100) / 100,
+      probs
+    };
+  }
+
+  window.chrome = {
+    runtime: {
+      lastError: null,
+      sendMessage(msg, cb) {
+        if (msg && msg.type === 'classify') {
+          setTimeout(() => cb(mockClassify(msg.item)), 300 + Math.random() * 350);
+        } else if (cb) {
+          cb({ ok: true });
+        }
+      }
+    },
+    storage: {
+      sync: { get: async () => ({ provider: 'mock', enabled: true }) },
+      onChanged: { addListener() {} }
+    }
+  };
+</script>
+<script src="../src/content.js"></script>
+<script>
+  window.__stats = () => ({
+    folded: document.querySelectorAll('article[data-xf-action="fold"]').length,
+    dim: document.querySelectorAll('article[data-xf-action="dim"]').length,
+    hidden: document.querySelectorAll('article[data-xf-action="hidden"]').length,
+    expanded: document.querySelectorAll('article[data-xf-action="expanded"]').length,
+    banners: document.querySelectorAll('.xf-banner').length,
+    pill: (document.querySelector('.xf-pill') || {}).textContent || null
+  });
+</script>
+</body>
+</html>
