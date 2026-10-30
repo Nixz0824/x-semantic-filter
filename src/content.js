@@ -24,6 +24,7 @@
   const recentErrors = [];
   let pill = null;
   let errorBar = null;
+  let pauseUntil = 0;
 
   /* 自动反馈：高置信度时替用户点 X 的「对此帖子不感兴趣」 */
   const FEEDBACK_MAX = 8;
@@ -159,6 +160,7 @@
   }
 
   function enqueue(el) {
+    if (Date.now() < pauseUntil) return;
     if (!el.isConnected) return;
     if (el.dataset.xfState) {
       // React 重渲染可能把横幅冲掉，但保留了我们打的标记。检测到这种情况就重跑一次。
@@ -204,6 +206,12 @@
     } catch (err) {
       job.el.dataset.xfState = "error";
       noteError(String((err && err.message) || err));
+      return;
+    }
+    if (res && res.cooldown) {
+      pauseUntil = res.until || Date.now() + 3600000;
+      job.el.dataset.xfState = "skip";
+      noteCooldown(pauseUntil);
       return;
     }
     if (!res || res.action === "none") {
@@ -425,6 +433,26 @@
     if (counts.hidden) parts.push(T("隐藏") + " " + counts.hidden);
     if (counts.dimmed) parts.push(T("淡化") + " " + counts.dimmed);
     pill.querySelector(".xf-pill-text").textContent = T("语义过滤 · ") + parts.join(" · ");
+  }
+
+  function noteCooldown(until) {
+    if (errorBar) return;
+    const d = new Date(until);
+    const hh = String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0");
+    errorBar = document.createElement("div");
+    errorBar.className = "xf-error";
+    const span = document.createElement("span");
+    span.textContent = T("模型额度用完，过滤已暂停，%s 后自动恢复", hh);
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "xf-pill-btn";
+    btn.textContent = T("关闭");
+    btn.addEventListener("click", () => {
+      errorBar.remove();
+      errorBar = null;
+    });
+    errorBar.append(span, btn);
+    document.body.appendChild(errorBar);
   }
 
   function noteError(message) {

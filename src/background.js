@@ -452,11 +452,30 @@ async function recordError(message) {
 /* 主流程                                                              */
 /* ------------------------------------------------------------------ */
 
+/* 额度冷却：429 且是「每日免费额度用完」时，暂停调用到 UTC 零点，
+   避免每一帖都撞一次 429、把错误条刷满屏幕。 */
+async function getCooldownUntil() {
+  const { cooldownUntil } = await chrome.storage.local.get("cooldownUntil");
+  return cooldownUntil && cooldownUntil > Date.now() ? cooldownUntil : 0;
+}
+
+function nextUtcMidnight() {
+  const d = new Date();
+  return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate() + 1, 0, 5, 0);
+}
+
+function isQuotaError(message) {
+  return /429/.test(message) && /(free allocation|daily|quota|ration|额度)/i.test(message);
+}
+
 async function classify(item, cfgOverride) {
   const cfg = cfgOverride ? Object.assign({}, D, cfgOverride) : await getCfg();
   const rules = activeRules(cfg);
   if (!rules.length) return { action: "none" };
   if (!cfg.enabled) return { action: "none" };
+
+  const cooling = await getCooldownUntil();
+  if (cooling) return { action: "none", cooldown: true, until: cooling };
 
   const key = cacheKey(cfg, item);
   const hit = await cacheGet(key);
@@ -526,6 +545,11 @@ async function classify(item, cfgOverride) {
 
   if (!got) {
     const message = String((lastErr && lastErr.message) || "没有可判断的内容");
+    if (isQuotaError(message)) {
+      const until = nextUtcMidnight();
+      await chrome.storage.local.set({ cooldownUntil: until, lastError: { at: Date.now(), message } });
+      return { action: "none", cooldown: true, until };
+    }
     await recordError(message);
     return { action: "none", error: message };
   }

@@ -122,6 +122,13 @@ await XFAgent.applyPreset("political");
 
 Full method table, rule schema, and safety conventions: [AGENT.md](AGENT.md).
 
+
+## Quota and rate limits
+
+Decision models are billed per input token, so a long timeline can hit a daily cap — Cloudflare's free Workers AI allocation (10k Neurons/day) runs out fastest with many rules plus images. When the provider returns `429` with a quota message, the extension **pauses itself until the next UTC midnight** instead of retrying on every post, and shows a single dismissible notice. Nothing else breaks; folding resumes automatically.
+
+To stretch the quota: fewer rules, `Images per post = 1`, or switch to Jev (roughly 3.5× cheaper on text).
+
 ## Privacy
 
 - **No backend.** Requests go from your browser straight to the provider you configure.

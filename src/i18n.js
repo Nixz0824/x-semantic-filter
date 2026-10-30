@@ -172,6 +172,7 @@
     "折叠": "folded",
     "淡化": "dimmed",
     "过滤器请求失败：": "Filter request failed: ",
+    "模型额度用完，过滤已暂停，%s 后自动恢复": "Model quota exhausted — filtering paused until %s",
     "关闭": "Close",
 
     // ---- 动态提示 ----
