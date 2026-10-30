@@ -173,6 +173,10 @@
     "淡化": "dimmed",
     "过滤器请求失败：": "Filter request failed: ",
     "模型额度用完，过滤已暂停，%s 后自动恢复": "Model quota exhausted — filtering paused until %s",
+    "今日请求已达上限（%n 条），明天自动恢复": "Daily request cap reached (%n) — resuming tomorrow",
+    "每日请求上限": "Daily request cap",
+    "超过后暂停到次日 0 点，避免把免费额度一次用完。0 = 不限制。":
+      "Pauses until midnight once reached, so a free quota lasts the day. 0 = unlimited.",
     "关闭": "Close",
 
     // ---- 动态提示 ----

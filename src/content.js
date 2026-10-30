@@ -211,7 +211,7 @@
     if (res && res.cooldown) {
       pauseUntil = res.until || Date.now() + 3600000;
       job.el.dataset.xfState = "skip";
-      noteCooldown(pauseUntil);
+      noteCooldown(pauseUntil, res);
       return;
     }
     if (!res || res.action === "none") {
@@ -435,14 +435,16 @@
     pill.querySelector(".xf-pill-text").textContent = T("语义过滤 · ") + parts.join(" · ");
   }
 
-  function noteCooldown(until) {
+  function noteCooldown(until, res) {
     if (errorBar) return;
     const d = new Date(until);
     const hh = String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0");
     errorBar = document.createElement("div");
     errorBar.className = "xf-error";
     const span = document.createElement("span");
-    span.textContent = T("模型额度用完，过滤已暂停，%s 后自动恢复", hh);
+    span.textContent = res && res.budget
+      ? T("今日请求已达上限（%n 条），明天自动恢复", res.limit || 0)
+      : T("模型额度用完，过滤已暂停，%s 后自动恢复", hh);
     const btn = document.createElement("button");
     btn.type = "button";
     btn.className = "xf-pill-btn";

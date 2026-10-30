@@ -123,6 +123,18 @@ await XFAgent.applyPreset("political");
 Full method table, rule schema, and safety conventions: [AGENT.md](AGENT.md).
 
 
+
+## Cost control
+
+Every post used to resend all rule descriptions, which made the rules longer than the post itself. The current version is built around cutting that:
+
+- **Compact prompts** — the task sentence is sent once in `state`; each question is just `「label」criterion`. Body text is capped at 700 characters.
+- **Content-based cache** — results are keyed by normalised text + first image, not by post id, so the same copy-paste spam from ten accounts costs one call.
+- **Images only when relevant** — images are attached only if at least one enabled rule mentions images/posters/QR codes; otherwise they are dropped before the request.
+- **Daily request cap** — default 500/day. When reached, classification pauses until local midnight instead of silently draining the quota by noon.
+
+Measured on a 60-character post with 8 rules: request body dropped ~19% (more on long posts); identical reposts cost 0 extra calls; a post with an image and no image rule sends ~600 fewer tokens.
+
 ## Quota and rate limits
 
 Decision models are billed per input token, so a long timeline can hit a daily cap — Cloudflare's free Workers AI allocation (10k Neurons/day) runs out fastest with many rules plus images. When the provider returns `429` with a quota message, the extension **pauses itself until the next UTC midnight** instead of retrying on every post, and shows a single dismissible notice. Nothing else breaks; folding resumes automatically.

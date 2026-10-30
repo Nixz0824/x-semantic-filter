@@ -49,14 +49,17 @@ function cacheKey(cfg, item) {
       : cfg.provider === "clef"
       ? cfg.clefModel
       : cfg.model;
+  // 按「内容」而不是「帖子 id」缓存：同一段文案被不同账号搬运时直接复用，
+  // 垃圾话术刷屏基本都能命中。
+  const text = String(item.text || "").replace(/\s+/g, " ").trim().toLowerCase().slice(0, 300);
   const media = (item.images || [])[0] || "";
-  const sig = [cfg.provider, model, rulesSignature(cfg), item.id, media, cfg.visionEnabled].join("::");
+  const sig = [cfg.provider, model, rulesSignature(cfg), text, media, cfg.visionEnabled].join("::");
   let h = 2166136261;
   for (let i = 0; i < sig.length; i++) {
     h ^= sig.charCodeAt(i);
     h = Math.imul(h, 16777619);
   }
-  return "jf_" + (h >>> 0).toString(36) + "_" + item.id;
+  return "jf_" + (h >>> 0).toString(36);
 }
 
 async function cacheGet(key) {
@@ -91,9 +94,25 @@ function activeRules(cfg) {
   return cfg.rules.filter((r) => r.enabled).slice(0, MAX_RULES);
 }
 
-function buildState(item) {
-  const handle = item.handle ? "@" + item.handle : "未知作者";
-  return `作者：${handle}\n帖子内容：\n${item.text || "（无文字，仅图片）"}`;
+function buildState(item, cfg) {
+  const handle = item.handle ? "@" + item.handle : "未知";
+  const limit = Math.max(240, Math.min(1600, Number(cfg && cfg.maxChars) || 700));
+  const text = String(item.text || "（无文字）").slice(0, limit);
+  // 任务说明只发一次，替代原来每条问题里的长前缀
+  return `判断这条帖子属于下列哪些类别。只按语义判断，不要仅凭关键词。\n作者：${handle}\n帖子：\n${text}`;
+}
+
+// 问题文案压到最短：只留「标签」+ 判定标准
+function questionText(rule, hasImg) {
+  const desc = String(rule.desc || "").slice(0, 160);
+  return `「${rule.label}」${desc}${hasImg ? "（结合图片）" : ""}`;
+}
+
+// 只有规则本身涉及图片时，才把图片发出去（一张图约 600 token）
+function wantsImages(rules) {
+  return rules.some((r) =>
+    /图|画|海报|二维码|截屏|截图|表情|image|photo|poster|qr|meme|visual/i.test((r.label || "") + (r.desc || ""))
+  );
 }
 
 function httpError(service, status, body) {
@@ -117,7 +136,7 @@ async function callTypesafe(item, cfg, rules) {
   for (const r of rules) {
     questions[r.id] = {
       type: "noul",
-      instructions: `这条社交媒体帖子是否属于「${r.label}」这一类？判定标准：${r.desc}`,
+      instructions: questionText(r, false),
     };
   }
   const base = (cfg.typesafeBase || "https://api.typesafe.ai").replace(/\/+$/, "");
@@ -133,7 +152,7 @@ async function callTypesafe(item, cfg, rules) {
       },
       body: JSON.stringify({
         model: cfg.typesafeModel || "jev-latest",
-        state: buildState(item),
+        state: buildState(item, cfg),
         questions,
       }),
       signal: controller.signal,
@@ -168,7 +187,8 @@ async function callClef(item, cfg, rules) {
   const url = `${base}/accounts/${cfg.clefAccountId}/ai/run/${model}`;
 
   const images = [];
-  for (const u of (item.images || []).slice(0, 2)) {
+  const imageBudget = wantsImages(rules) ? 2 : 0;
+  for (const u of (item.images || []).slice(0, imageBudget)) {
     try {
       images.push(await imageToDataUrl(u));
     } catch (_) {
@@ -179,17 +199,10 @@ async function callClef(item, cfg, rules) {
 
   const questions = {};
   for (const r of rules) {
-    questions[r.id] = {
-      type: "noul",
-      instructions:
-        `这条社交媒体帖子是否属于「${r.label}」这一类？判定标准：${r.desc}` +
-        (hasImg
-          ? " 帖子里附了图片，请把图片内容一起看进去（包括图里的文字、二维码、联系方式、合成或涂鸦）。"
-          : ""),
-    };
+    questions[r.id] = { type: "noul", instructions: questionText(r, hasImg) };
   }
 
-  const payload = { model: model.split("/").pop(), state: buildState(item), questions };
+  const payload = { model: model.split("/").pop(), state: buildState(item, cfg), questions };
   if (hasImg) payload.images = images;
 
   const controller = new AbortController();
@@ -464,6 +477,30 @@ function nextUtcMidnight() {
   return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate() + 1, 0, 5, 0);
 }
 
+function localDay() {
+  const d = new Date();
+  return d.getFullYear() + "-" + (d.getMonth() + 1) + "-" + d.getDate();
+}
+
+function nextLocalMidnight() {
+  const d = new Date();
+  d.setHours(24, 5, 0, 0);
+  return d.getTime();
+}
+
+async function budgetState(cfg) {
+  const { usage } = await chrome.storage.local.get("usage");
+  const used = usage && usage.day === localDay() ? usage.count : 0;
+  return { used, limit: Math.max(0, Number(cfg.dailyBudget) || 0) };
+}
+
+async function bumpUsage() {
+  const { usage } = await chrome.storage.local.get("usage");
+  const day = localDay();
+  const count = usage && usage.day === day ? usage.count + 1 : 1;
+  await chrome.storage.local.set({ usage: { day, count } });
+}
+
 function isQuotaError(message) {
   return /429/.test(message) && /(free allocation|daily|quota|ration|额度)/i.test(message);
 }
@@ -476,6 +513,13 @@ async function classify(item, cfgOverride) {
 
   const cooling = await getCooldownUntil();
   if (cooling) return { action: "none", cooldown: true, until: cooling };
+
+  const budget = await budgetState(cfg);
+  if (budget.limit > 0 && budget.used >= budget.limit) {
+    const until = nextLocalMidnight();
+    await chrome.storage.local.set({ cooldownUntil: until });
+    return { action: "none", cooldown: true, until, budget: true, limit: budget.limit };
+  }
 
   const key = cacheKey(cfg, item);
   const hit = await cacheGet(key);
@@ -497,6 +541,7 @@ async function classify(item, cfgOverride) {
     cfg.provider !== "mock" &&
     cfg.provider !== "clef" &&
     images.length > 0 &&
+    wantsImages(rules) &&
     !!(cfg.visionBaseUrl || cfg.baseUrl) &&
     !!(cfg.visionApiKey || cfg.apiKey) &&
     !!(cfg.visionModel || cfg.model);
@@ -553,6 +598,8 @@ async function classify(item, cfgOverride) {
     await recordError(message);
     return { action: "none", error: message };
   }
+
+  await bumpUsage();
 
   const result = decide(probs, cfg, rules);
   result.probs = probs;

@@ -273,6 +273,7 @@
 
     $("#feedbackEnabled").checked = current.feedbackEnabled !== false;
     $("#feedbackThreshold").value = current.feedbackThreshold || 0.9;
+    $("#dailyBudget").value = String(current.dailyBudget == null ? 500 : current.dailyBudget);
 
     $("#actionMode").value = current.actionMode || "rule";
     $("#scope").value = current.scope || "all";
@@ -327,6 +328,7 @@
       visionMaxImages: Number($("#visionMaxImages").value) || 1,
       feedbackEnabled: $("#feedbackEnabled").checked,
       feedbackThreshold: Number($("#feedbackThreshold").value) || 0.9,
+      dailyBudget: Math.max(0, Number($("#dailyBudget").value) || 0),
       threshold: Number($("#threshold").value),
       minActConfidence: Number($("#minActConfidence").value),
       actionMode: $("#actionMode").value,

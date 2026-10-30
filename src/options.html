@@ -94,7 +94,7 @@
         </div>
         <div class="field">
           <label for="clefKey">API Token</label>
-          <input type="password" id="clefKey" placeholder="Cloudflare API token" autocomplete="off" spellcheck="false" />
+          <input type="password" id="clefKey" placeholder="cfut_..." autocomplete="off" spellcheck="false" />
           <p class="hint">Token 需要有 Workers AI 权限。和 Jev 不同，这个模型是决策接口，不是 chat/completions。</p>
         </div>
         <div class="field">
@@ -249,6 +249,12 @@
         <label for="feedbackThreshold">反馈阈值 <b id="feedbackVal">0.90</b></label>
         <input type="range" id="feedbackThreshold" min="0.8" max="0.99" step="0.01" />
         <p class="hint">只在首页时间线生效，每 10 分钟最多 8 条。这一步是喂给 X 的推荐算法，让「为你推荐」少推同类内容；关掉不影响折叠。</p>
+      </div>
+
+      <div class="field">
+        <label for="dailyBudget">每日请求上限</label>
+        <input type="number" id="dailyBudget" min="0" max="5000" step="50" />
+        <p class="hint">超过后暂停到次日 0 点，避免把免费额度一次用完。0 = 不限制。</p>
       </div>
 
       <div class="field">
