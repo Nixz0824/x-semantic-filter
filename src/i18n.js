@@ -116,6 +116,12 @@
     "反馈阈值": "Feedback threshold",
     "只在首页时间线生效，每 10 分钟最多 8 条。这一步是喂给 X 的推荐算法，让「为你推荐」少推同类内容；关掉不影响折叠。":
       "Home timeline only, max 8 per 10 minutes. This trains X's recommender so “For you” shows less of it. Turning it off does not affect folding.",
+    "作者屏蔽名单": "Blocked authors",
+    "每行一个账号，不带 @。命中后直接隐藏，不调用模型。":
+      "One handle per line, without @. Matches are hidden locally.",
+    "这些账号的帖子和回复会从时间线上直接消失，本地处理、不花钱、不受「生效范围」限制。":
+      "Posts and replies from these accounts disappear from your timeline — local only, no API cost, regardless of scope.",
+    "屏蔽": "blocked",
     "作者白名单": "Author allowlist",
     "每行一个账号，不带 @。例如：\nlevelsio\nsimonw":
       "One handle per line, without @. e.g.\nlevelsio\nsimonw",

@@ -258,6 +258,12 @@
       </div>
 
       <div class="field">
+        <label for="blocklist">作者屏蔽名单</label>
+        <textarea id="blocklist" rows="3" placeholder="每行一个账号，不带 @。命中后直接隐藏，不调用模型。"></textarea>
+        <p class="hint">这些账号的帖子和回复会从时间线上直接消失，本地处理、不花钱、不受「生效范围」限制。</p>
+      </div>
+
+      <div class="field">
         <label for="allowlist">作者白名单</label>
         <textarea id="allowlist" rows="3" placeholder="每行一个账号，不带 @。例如：&#10;levelsio&#10;simonw"></textarea>
         <p class="hint">白名单里的作者会被直接跳过，不发送任何内容给模型。</p>

@@ -40,6 +40,8 @@
     scope: "all",
     // 作者白名单，命中直接跳过（不带 @）
     allowlist: [],
+    // 作者黑名单：命中就直接隐藏，不送模型。填 @handle 或 handle 都行。
+    blocklist: [],
     // 置信/概率低于该值只淡化，绝不折叠，用来压误伤
     minActConfidence: 0.6,
 

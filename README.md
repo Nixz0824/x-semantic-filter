@@ -38,6 +38,7 @@ Jev and Clef-omni share the same `POST {state, questions}` protocol, so switchin
 - **Three actions** — fold (default), dim, hide. Fold keeps a summary bar; dim reveals on hover; hide can be restored from the bottom-left pill.
 - **Image checks** — Clef-omni reads images in the same call. With other backends you can attach a vision model; images are downloaded and sent as base64, so the provider never needs to reach `pbs.twimg.com`.
 - **Optional feedback** — on high confidence, the extension opens the post's menu and clicks *Not interested in this post* (or *…in this ad* for promoted posts). Home timeline only, max 8 per 10 minutes.
+- **Author blocklist** — handles listed here are hidden on sight, in the home timeline, search results and reply threads. Handled locally: no API call, no cost, and it ignores the scope setting.
 - **Author allowlist** — skipped entirely, nothing is sent to the model.
 - **Agent API** — `window.XFAgent` on the settings page, plus JSON import/export. See [AGENT.md](AGENT.md).
 - **Bilingual UI** — 中 / EN toggle in the header, follows the browser by default.

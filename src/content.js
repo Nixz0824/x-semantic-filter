@@ -20,7 +20,7 @@
   const pendingBatch = new Set();
   const expanded = new Set();
   const counted = new Set();
-  const counts = { folded: 0, dimmed: 0, hidden: 0 };
+  const counts = { folded: 0, dimmed: 0, hidden: 0, blocked: 0 };
   const recentErrors = [];
   let pill = null;
   let errorBar = null;
@@ -171,12 +171,25 @@
       delete el.dataset.xfAction;
       delete el.dataset.xfBase;
     }
-    if (!inScope()) return;
     const info = extract(el);
     if (!info) {
       el.dataset.xfState = "skip";
       return;
     }
+
+    // 作者黑名单：本地直接隐藏，不调用模型、不花钱，也不受「生效范围」限制，
+    // 主页、搜索、详情页回复里只要是他发的都会消失。
+    const block = (cfg.blocklist || []).map((h) => String(h).replace(/^@/, "").trim().toLowerCase()).filter(Boolean);
+    if (info.handle && block.includes(info.handle.toLowerCase())) {
+      el.dataset.xfState = "blocked";
+      el.dataset.xfAction = "hidden";
+      counts.blocked += 1;
+      updatePill();
+      return;
+    }
+
+    if (!inScope()) return;
+
     const allow = (cfg.allowlist || []).map((h) => String(h).replace(/^@/, "").toLowerCase());
     if (info.handle && allow.includes(info.handle.toLowerCase())) {
       el.dataset.xfState = "skip";
@@ -432,6 +445,7 @@
     if (counts.folded) parts.push(T("折叠") + " " + counts.folded);
     if (counts.hidden) parts.push(T("隐藏") + " " + counts.hidden);
     if (counts.dimmed) parts.push(T("淡化") + " " + counts.dimmed);
+    if (counts.blocked) parts.push(T("屏蔽") + " " + counts.blocked);
     pill.querySelector(".xf-pill-text").textContent = T("语义过滤 · ") + parts.join(" · ");
   }
 
@@ -502,7 +516,7 @@
     }
     queue = [];
     counted.clear();
-    counts.folded = counts.dimmed = counts.hidden = 0;
+    counts.folded = counts.dimmed = counts.hidden = counts.blocked = 0;
   }
 
   function scanAll() {

@@ -199,7 +199,7 @@
       }
     },
     storage: {
-      sync: { get: async () => ({ provider: 'mock', enabled: true }) },
+      sync: { get: async () => ({ provider: 'mock', enabled: true, blocklist: ['poster_bot'] }) },
       onChanged: { addListener() {} }
     }
   };
@@ -210,6 +210,7 @@
     folded: document.querySelectorAll('article[data-xf-action="fold"]').length,
     dim: document.querySelectorAll('article[data-xf-action="dim"]').length,
     hidden: document.querySelectorAll('article[data-xf-action="hidden"]').length,
+    blocked: [...document.querySelectorAll('article[data-xf-state="blocked"]')].length,
     expanded: document.querySelectorAll('article[data-xf-action="expanded"]').length,
     banners: document.querySelectorAll('.xf-banner').length,
     pill: (document.querySelector('.xf-pill') || {}).textContent || null

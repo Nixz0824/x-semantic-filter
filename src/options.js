@@ -281,6 +281,7 @@
     $("#minActConfidence").value = current.minActConfidence;
     updateSliders();
 
+    $("#blocklist").value = (current.blocklist || []).join("\n");
     $("#allowlist").value = (current.allowlist || []).join("\n");
 
     renderRules();
@@ -333,6 +334,10 @@
       minActConfidence: Number($("#minActConfidence").value),
       actionMode: $("#actionMode").value,
       scope: $("#scope").value,
+      blocklist: $("#blocklist")
+        .value.split(/[\n,]/)
+        .map((h) => h.trim().replace(/^@/, ""))
+        .filter(Boolean),
       allowlist: $("#allowlist")
         .value.split(/\n+/)
         .map((s) => s.trim().replace(/^@/, ""))
