@@ -622,6 +622,11 @@
     $("#statFeedback").textContent = s.feedback || 0;
     $("#statErrors").textContent = s.errors || 0;
     $("#lastError").textContent = res.lastError ? "最近一次错误：" + res.lastError.message : "";
+    const tu = res.tokenUsage;
+    const used = (res.usage && res.usage.count) || 0;
+    $("#usageLine").textContent = tu && tu.tokens
+      ? `今日 ${used} 次请求 · 约 ${(tu.tokens / 1000).toFixed(1)}k tokens`
+      : "";
   }
 
   /* ---------------------------------------------------------------- */

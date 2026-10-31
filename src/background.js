@@ -62,28 +62,62 @@ function cacheKey(cfg, item) {
   return "jf_" + (h >>> 0).toString(36);
 }
 
+const CACHE_TTL = 7 * 24 * 3600 * 1000;
+let cacheWrites = 0;
+
 async function cacheGet(key) {
-  if (mem.has(key)) return mem.get(key);
+  const now = Date.now();
+  if (mem.has(key)) {
+    const e = mem.get(key);
+    if (e && now - e.t < CACHE_TTL) return e.d;
+    mem.delete(key);
+  }
   try {
-    const o = await chrome.storage.session.get(key);
-    const v = o[key];
-    if (v) {
-      mem.set(key, v);
-      return v;
+    const o = await chrome.storage.local.get(key);
+    const e = o[key];
+    if (e && e.t && now - e.t < CACHE_TTL) {
+      mem.set(key, e);
+      return e.d;
     }
+    if (e) chrome.storage.local.remove(key);
   } catch (_) {}
   return null;
 }
 
 async function cacheSet(key, value) {
-  mem.set(key, value);
-  if (mem.size > MEM_LIMIT) {
-    const first = mem.keys().next().value;
-    mem.delete(first);
-  }
+  const entry = { t: Date.now(), d: value };
+  mem.set(key, entry);
+  if (mem.size > MEM_LIMIT) mem.delete(mem.keys().next().value);
   try {
-    await chrome.storage.session.set({ [key]: value });
+    // 用 local 而不是 session：session 在浏览器重启后清空，会导致每次重启重新付费一遍
+    await chrome.storage.local.set({ [key]: entry });
+    if (++cacheWrites % 120 === 0) pruneCache();
   } catch (_) {}
+}
+
+async function pruneCache() {
+  try {
+    if (!chrome.storage.local.getKeys) return;
+    const keys = (await chrome.storage.local.getKeys()).filter((k) => k.startsWith("jf_"));
+    if (keys.length <= 4000) return;
+    const pack = await chrome.storage.local.get(keys);
+    const sorted = keys
+      .map((k) => ({ k, t: (pack[k] && pack[k].t) || 0 }))
+      .sort((a, b) => a.t - b.t);
+    const drop = sorted.slice(0, sorted.length - 3500).map((x) => x.k);
+    if (drop.length) await chrome.storage.local.remove(drop);
+  } catch (_) {}
+}
+
+async function addTokens(n) {
+  const tokens = Number(n) || 0;
+  if (!tokens) return;
+  const day = localDay();
+  const { tokenUsage } = await chrome.storage.local.get("tokenUsage");
+  const cur = tokenUsage && tokenUsage.day === day ? tokenUsage : { day, tokens: 0, requests: 0 };
+  cur.tokens += tokens;
+  cur.requests += 1;
+  await chrome.storage.local.set({ tokenUsage: cur });
 }
 
 /* ------------------------------------------------------------------ */
@@ -187,7 +221,9 @@ async function callClef(item, cfg, rules) {
   const url = `${base}/accounts/${cfg.clefAccountId}/ai/run/${model}`;
 
   const images = [];
-  const imageBudget = wantsImages(rules) ? 2 : 0;
+  // 长文帖的语义主要在文字里，图片很贵（单张可达数千 token），只在短文/纯图时看
+  const textLen = String(item.text || "").length;
+  const imageBudget = wantsImages(rules) && textLen <= 400 ? 2 : 0;
   for (const u of (item.images || []).slice(0, imageBudget)) {
     try {
       images.push(await imageToDataUrl(u));
@@ -226,13 +262,15 @@ async function callClef(item, cfg, rules) {
     throw httpError("Clef", res.status, body);
   }
   const data = await res.json();
+  const usage = (data.result && data.result.usage) || data.usage || null;
+  if (usage && usage.input_tokens) await addTokens(usage.input_tokens);
   const answers = (data.result && data.result.answers) || data.answers || {};
   const probs = {};
   for (const r of rules) {
     const a = answers[r.id];
     probs[r.id] = a && typeof a.noul === "number" ? a.noul : 0;
   }
-  return { probs, usage: (data.result && data.result.usage) || null, usedImage: hasImg };
+  return { probs, usage, usedImage: hasImg };
 }
 
 async function callOpenAI(item, cfg, rules) {
@@ -625,13 +663,15 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
         sendResponse({ ok: true, provider: cfg.provider, enabled: cfg.enabled });
       } else if (msg && msg.type === "getState") {
         const cfg = await getCfg();
-        const o = await chrome.storage.local.get(["stats", "lastError"]);
+        const o = await chrome.storage.local.get(["stats", "lastError", "tokenUsage", "usage"]);
         sendResponse({
           ok: true,
           enabled: cfg.enabled,
           provider: cfg.provider,
           ruleCount: activeRules(cfg).length,
           stats: o.stats || null,
+          tokenUsage: o.tokenUsage || null,
+          usage: o.usage || null,
           lastError: o.lastError || null,
         });
       } else if (msg && msg.type === "setEnabled") {

@@ -122,6 +122,8 @@
     "这些账号的帖子和回复会从时间线上直接消失，本地处理、不花钱、不受「生效范围」限制。":
       "Posts and replies from these accounts disappear from your timeline — local only, no API cost, regardless of scope.",
     "屏蔽": "blocked",
+    "屏蔽作者": "Blocked author",
+    "已屏蔽": "Blocked",
     "作者白名单": "Author allowlist",
     "每行一个账号，不带 @。例如：\nlevelsio\nsimonw":
       "One handle per line, without @. e.g.\nlevelsio\nsimonw",

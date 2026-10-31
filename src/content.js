@@ -181,8 +181,14 @@
     // 主页、搜索、详情页回复里只要是他发的都会消失。
     const block = (cfg.blocklist || []).map((h) => String(h).replace(/^@/, "").trim().toLowerCase()).filter(Boolean);
     if (info.handle && block.includes(info.handle.toLowerCase())) {
-      el.dataset.xfState = "blocked";
-      el.dataset.xfAction = "hidden";
+      // 屏蔽名单不静默隐藏，按「折叠」处理：留一条可展开的提示
+      apply(el, info, {
+        action: "fold",
+        label: T("屏蔽作者"),
+        note: T("已屏蔽"),
+        prob: 1,
+        ruleId: "blocklist",
+      });
       counts.blocked += 1;
       updatePill();
       return;
@@ -348,7 +354,7 @@
 
     const note = document.createElement("span");
     note.className = "xf-note";
-    note.textContent = res.action === "hide" ? T("已隐藏") : res.action === "dim" ? T("低信号") : T("已折叠");
+    note.textContent = res.note || (res.action === "hide" ? T("已隐藏") : res.action === "dim" ? T("低信号") : T("已折叠"));
 
     const spacer = document.createElement("span");
     spacer.className = "xf-spacer";

@@ -38,7 +38,7 @@ Jev and Clef-omni share the same `POST {state, questions}` protocol, so switchin
 - **Three actions** — fold (default), dim, hide. Fold keeps a summary bar; dim reveals on hover; hide can be restored from the bottom-left pill.
 - **Image checks** — Clef-omni reads images in the same call. With other backends you can attach a vision model; images are downloaded and sent as base64, so the provider never needs to reach `pbs.twimg.com`.
 - **Optional feedback** — on high confidence, the extension opens the post's menu and clicks *Not interested in this post* (or *…in this ad* for promoted posts). Home timeline only, max 8 per 10 minutes.
-- **Author blocklist** — handles listed here are hidden on sight, in the home timeline, search results and reply threads. Handled locally: no API call, no cost, and it ignores the scope setting.
+- **Author blocklist** — handles listed here are folded on sight (a "Blocked author" bar you can expand) across home, search and reply threads. Handled locally: no API call, no cost, and scope does not apply to it.
 - **Author allowlist** — skipped entirely, nothing is sent to the model.
 - **Agent API** — `window.XFAgent` on the settings page, plus JSON import/export. See [AGENT.md](AGENT.md).
 - **Bilingual UI** — 中 / EN toggle in the header, follows the browser by default.
@@ -130,8 +130,8 @@ Full method table, rule schema, and safety conventions: [AGENT.md](AGENT.md).
 Every post used to resend all rule descriptions, which made the rules longer than the post itself. The current version is built around cutting that:
 
 - **Compact prompts** — the task sentence is sent once in `state`; each question is just `「label」criterion`. Body text is capped at 700 characters.
-- **Content-based cache** — results are keyed by normalised text + first image, not by post id, so the same copy-paste spam from ten accounts costs one call.
-- **Images only when relevant** — images are attached only if at least one enabled rule mentions images/posters/QR codes; otherwise they are dropped before the request.
+- **Persistent cache** — results are keyed by normalised text + first image and stored in `chrome.storage.local` for 7 days, so restarting the browser doesn't re-bill every post you already scrolled past.
+- **Images only when relevant** — attached only if an enabled rule mentions images *and* the post text is under 400 characters. Long text posts are judged on text alone, which is where the signal usually is.
 - **Daily request cap** — default 500/day. When reached, classification pauses until local midnight instead of silently draining the quota by noon.
 
 Measured on a 60-character post with 8 rules: request body dropped ~19% (more on long posts); identical reposts cost 0 extra calls; a post with an image and no image rule sends ~600 fewer tokens.
