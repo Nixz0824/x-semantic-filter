@@ -32,6 +32,9 @@ chrome.storage.onChanged.addListener((_changes, area) => {
 
 const mem = new Map();
 const MEM_LIMIT = 4000;
+// 只有「短文案」或纯图帖才把图片发给模型：恶意图片基本都藏在短配文和表情包里，
+// 长文帖的主体信息在文字上，一张图却要多花 2–4k token。
+const IMAGE_TEXT_LIMIT = 40;
 
 function rulesSignature(cfg) {
   // 只把“影响模型判断”的字段放进签名：改动作/阈值不该让缓存失效，
@@ -221,9 +224,8 @@ async function callClef(item, cfg, rules) {
   const url = `${base}/accounts/${cfg.clefAccountId}/ai/run/${model}`;
 
   const images = [];
-  // 长文帖的语义主要在文字里，图片很贵（单张可达数千 token），只在短文/纯图时看
   const textLen = String(item.text || "").length;
-  const imageBudget = wantsImages(rules) && textLen <= 400 ? 2 : 0;
+  const imageBudget = wantsImages(rules) && textLen <= IMAGE_TEXT_LIMIT ? 2 : 0;
   for (const u of (item.images || []).slice(0, imageBudget)) {
     try {
       images.push(await imageToDataUrl(u));

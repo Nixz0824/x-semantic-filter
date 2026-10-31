@@ -131,7 +131,7 @@ Every post used to resend all rule descriptions, which made the rules longer tha
 
 - **Compact prompts** — the task sentence is sent once in `state`; each question is just `「label」criterion`. Body text is capped at 700 characters.
 - **Persistent cache** — results are keyed by normalised text + first image and stored in `chrome.storage.local` for 7 days, so restarting the browser doesn't re-bill every post you already scrolled past.
-- **Images only when relevant** — attached only if an enabled rule mentions images *and* the post text is under 400 characters. Long text posts are judged on text alone, which is where the signal usually is.
+- **Images only when relevant** — attached only if an enabled rule mentions images *and* the caption is 40 characters or shorter (or the post is image-only). Malicious imagery tends to travel in memes and one-liners; long posts are judged on text.
 - **Daily request cap** — default 500/day. When reached, classification pauses until local midnight instead of silently draining the quota by noon.
 
 Measured on a 60-character post with 8 rules: request body dropped ~19% (more on long posts); identical reposts cost 0 extra calls; a post with an image and no image rule sends ~600 fewer tokens.
