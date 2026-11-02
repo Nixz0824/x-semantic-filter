@@ -355,6 +355,7 @@
     const note = document.createElement("span");
     note.className = "xf-note";
     note.textContent = res.note || (res.action === "hide" ? T("已隐藏") : res.action === "dim" ? T("低信号") : T("已折叠"));
+    b.dataset.noteText = note.textContent;
 
     const spacer = document.createElement("span");
     spacer.className = "xf-spacer";
@@ -373,6 +374,9 @@
     });
     b.addEventListener("mousedown", (e) => {
       e.preventDefault();
+      e.stopPropagation();
+    });
+    b.addEventListener("pointerdown", (e) => {
       e.stopPropagation();
     });
 
@@ -407,8 +411,12 @@
 
   function setExpanded(el) {
     el.dataset.xfAction = "expanded";
-    const btn = el.querySelector(".xf-banner .xf-toggle");
+    const banner = el.querySelector(":scope > .xf-banner");
+    if (!banner) return;
+    const btn = banner.querySelector(".xf-toggle");
     if (btn) btn.textContent = T("收起");
+    const note = banner.querySelector(".xf-note");
+    if (note) note.textContent = T("已展开");
   }
 
   function toggle(info, banner) {
@@ -418,6 +426,8 @@
       expanded.delete(info.id);
       setAction(el, el.dataset.xfBase || "fold");
       banner.querySelector(".xf-toggle").textContent = T("展开");
+      const note = banner.querySelector(".xf-note");
+      if (note) note.textContent = banner.dataset.noteText || T("已折叠");
       banner.title = "点击展开";
     } else {
       expanded.add(info.id);

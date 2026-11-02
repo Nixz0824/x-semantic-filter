@@ -65,16 +65,16 @@ article[data-xf-action="dim"]:hover > div:not(.xf-banner) {
   filter: none;
 }
 
-/* ---------------- 淡化 / 已展开：右上角小胶囊 ----------------
+/* ---------------- 淡化：右上角小胶囊 ----------------
    X 的 article 是 display:flex，流内元素会被撑成整列，必须绝对定位 */
 
-article[data-xf-action="dim"] > .xf-banner,
-article[data-xf-action="expanded"] > .xf-banner {
+article[data-xf-action="dim"] > .xf-banner {
   position: absolute;
   top: 6px;
   right: 56px;
   left: auto;
   bottom: auto;
+  z-index: 5;
   display: inline-flex;
   align-items: center;
   gap: 5px;
@@ -92,40 +92,71 @@ article[data-xf-action="expanded"] > .xf-banner {
   backdrop-filter: blur(4px);
 }
 
-article[data-xf-action="expanded"] > .xf-banner {
-  pointer-events: auto;
-  cursor: pointer;
-}
-
 article[data-xf-action="dim"] > .xf-banner .xf-spacer,
-article[data-xf-action="expanded"] > .xf-banner .xf-spacer,
 article[data-xf-action="dim"] > .xf-banner .xf-btn,
 article[data-xf-action="dim"] > .xf-banner .xf-note {
   display: none;
 }
 
-article[data-xf-action="dim"] > .xf-banner .xf-tag,
-article[data-xf-action="expanded"] > .xf-banner .xf-tag {
+article[data-xf-action="dim"] > .xf-banner .xf-tag {
   font-size: 11px;
   font-weight: 600;
 }
 
-article[data-xf-action="dim"] > .xf-banner .xf-prob,
-article[data-xf-action="expanded"] > .xf-banner .xf-prob {
+article[data-xf-action="dim"] > .xf-banner .xf-prob {
   font-size: 10.5px;
   padding: 1px 4px;
   background: transparent;
 }
 
+/* ---------------- 已展开：顶部整条 ----------------
+   小胶囊浮在右上角会被帖子头部盖住，点「收起」直接穿透、跳进帖子。
+   改成占满宽度的顶栏，并给 article 让出 36px，永远点得到。 */
+
+article[data-xf-action="expanded"] {
+  padding-top: 36px !important;
+}
+
+article[data-xf-action="expanded"] > .xf-banner {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 9;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 36px;
+  margin: 0;
+  padding: 0 16px;
+  border: 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--xf-cat, #1d9bf0) 18%, transparent);
+  border-radius: 0;
+  background: color-mix(in srgb, var(--xf-cat, #1d9bf0) 7%, var(--xf-surface, #fff));
+  box-shadow: inset 3px 0 0 var(--xf-cat, #1d9bf0);
+  pointer-events: auto;
+  cursor: pointer;
+  font-size: 12px;
+  line-height: 1;
+}
+
 article[data-xf-action="expanded"] > .xf-banner .xf-icon {
-  display: none;
+  width: 22px;
+  height: 22px;
+}
+
+article[data-xf-action="expanded"] > .xf-banner .xf-tag {
+  font-size: 12.5px;
+}
+
+article[data-xf-action="expanded"] > .xf-banner .xf-prob {
+  font-size: 11px;
+  padding: 1px 6px;
 }
 
 article[data-xf-action="expanded"] > .xf-banner .xf-btn {
-  font-size: 10.5px;
-  padding: 2px 7px;
-  border-width: 0;
-  background: transparent;
+  font-size: 11px;
+  padding: 3px 10px;
 }
 
 /* ---------------- 隐藏 ---------------- */
